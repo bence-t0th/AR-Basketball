@@ -12,6 +12,9 @@ import ARKit
 class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
+    @IBOutlet weak var addHoopbtn: UIButton!
+    
+    var currentNode: SCNNode!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,8 +31,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Set the scene to the view
         sceneView.scene = scene
         
-        addBackboard()
-        
         registerGestureRecognizer()
     }
     
@@ -44,7 +45,33 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         backboardNode.position = SCNVector3(x: 0, y: 0.5, z: -3)
         
+        let physicsShape = SCNPhysicsShape(node: backboardNode, options: [SCNPhysicsShape.Option.type: SCNPhysicsShape.ShapeType.concavePolyhedron])
+        let physicsBody = SCNPhysicsBody(type: .static, shape: physicsShape)
+        backboardNode.physicsBody = physicsBody
+        
         sceneView.scene.rootNode.addChildNode(backboardNode)
+        
+        currentNode = backboardNode
+    }
+    
+    func horizontalAction(node: SCNNode) {
+        let leftAction = SCNAction.move(by: SCNVector3(-1, 0, 0), duration: 3)
+        let rightAction = SCNAction.move(by: SCNVector3(1, 0, 0), duration: 3)
+        
+        let actionSequence = SCNAction.sequence([leftAction, rightAction])
+        
+        node.runAction(SCNAction.repeat(actionSequence, count: 2))
+    }
+    
+    func roundAction(node: SCNNode) {
+        let upLeft = SCNAction.move(by: SCNVector3(1, 1, 0), duration: 2)
+        let downRight = SCNAction.move(by: SCNVector3(1, -1, 0), duration: 2)
+        let downLeft = SCNAction.move(by: SCNVector3(-1, -1, 0), duration: 2)
+        let upRightt = SCNAction.move(by: SCNVector3(-1, 1, 0), duration: 2)
+        
+        let actionSequence = SCNAction.sequence([upLeft, downRight, downLeft, upRightt])
+        
+        node.runAction(SCNAction.repeat(actionSequence, count: 2))
     }
     
     func registerGestureRecognizer() {
@@ -67,13 +94,20 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         let cameraPosition = SCNVector3Make(cameraLocation.x + cameraOrientation.x, cameraLocation.y + cameraOrientation.y, cameraLocation.z + cameraOrientation.z)
         
-        let ball = SCNSphere(radius: 0.15)
+        let ball = SCNSphere(radius: 0.115)
         let material = SCNMaterial()
         material.diffuse.contents = UIImage(named: "basketballSkin.png")
         ball.materials = [material]
         
         let ballNode = SCNNode(geometry: ball)
         ballNode.position = cameraPosition
+        
+        let physicsShape = SCNPhysicsShape(node: ballNode, options: nil)
+        let physicsBody = SCNPhysicsBody(type: .dynamic, shape: physicsShape)
+        ballNode.physicsBody = physicsBody
+        
+        let forceVector: Float = 6
+        ballNode.physicsBody?.applyForce(SCNVector3(cameraOrientation.x * forceVector, cameraOrientation.y * forceVector, cameraOrientation.z * forceVector), asImpulse: true)
         
         sceneView.scene.rootNode.addChildNode(ballNode)
     }
@@ -119,5 +153,23 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         
+    }
+    
+    
+    @IBAction func addHoop(_ sender: Any) {
+        addBackboard()
+        addHoopbtn.isHidden = true
+    }
+    
+    @IBAction func startRoundAction(_ sender: Any) {
+        roundAction(node: currentNode)
+    }
+    
+    @IBAction func stopAllaction(_ sender: Any) {
+        currentNode.removeAllActions()
+    }
+    
+    @IBAction func startHorizontalAction(_ sender: Any) {
+        horizontalAction(node: currentNode)
     }
 }
