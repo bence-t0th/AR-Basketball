@@ -1,0 +1,11 @@
+language: swift
+osx_image: xcode12.4
+xcode_project: Basketball.xcodeproj
+xcode_scheme: Basketball
+xcode_destination: platform=iOS Simulator,OS=14.4,name=iPhone 11 Pro
+
+script:
+  - xcodebuild clean build -project 'Basketball.xcodeproj' -scheme 'Basketball' -destination 'platform=iOS Simulator,OS=14.4,name=iPhone 11 Pro'
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
